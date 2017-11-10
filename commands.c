@@ -3,7 +3,7 @@
 #include "commands.h"
 //********************************************
 // function name: ExeCmd
-// Description: interperts and executes built-in commands
+// Description: interprets and executes built-in commands
 // Parameters: pointer to jobs, command string
 // Returns: 0 - success,1 - failure
 //**************************************************************************************
@@ -14,7 +14,8 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 	char pwd[MAX_LINE_SIZE];
 	char* delimiters = " \t\n";  
 	int i = 0, num_arg = 0;
-	bool illegal_cmd = FALSE; // illegal command
+	bool illegal_cmd = TRUE; // illegal command
+        char* PATH_;
     	cmd = strtok(lineSize, delimiters);
 	if (cmd == NULL)
 		return 0; 
@@ -32,14 +33,24 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 // MORE IF STATEMENTS AS REQUIRED
 /*************************************************/
 	if (!strcmp(cmd, "cd") ) 
-	{
-		
+	{   
+            // TODO: add prev_PATH shit
+            PATH_ = args[1];
+            if (chdir(PATH_)==-1){
+                printf("\"%s\" - path not found\n", PATH_);
+                return -1;
+            }
+            else{
+                return 0;
+            }
 	} 
 	
 	/*************************************************/
 	else if (!strcmp(cmd, "pwd")) 
 	{
-		
+            getcwd(pwd, MAX_LINE_SIZE);
+            printf("%s\n",pwd);
+            return 0; //TODO: add error handling
 	}
 	
 	/*************************************************/
@@ -56,7 +67,10 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 	/*************************************************/
 	else if (!strcmp(cmd, "showpid")) 
 	{
-		
+            int smash_pid;
+            smash_pid = getpid();
+            printf("smash pid is %d/n", smash_pid);
+            return 0;
 	}
 	/*************************************************/
 	else if (!strcmp(cmd, "fg")) 
@@ -99,14 +113,16 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 	{
     		case -1: 
 					// Add your code here (error)
-					
-					/* 
+			printf("error using fork please try again");
+                        break;
+                        /* 
 					your code
 					*/
         	case 0 :
                 	// Child Process
                		setpgrp();
-					
+				
+                        break;
 			        // Add your code here (execute an external command)
 					
 					/* 
@@ -115,7 +131,8 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 			
 			default:
                 	// Add your code here
-					
+                            printf("This is external mode; could not find path");
+                            return execv(cmdString, args);
 					/* 
 					your code
 					*/
