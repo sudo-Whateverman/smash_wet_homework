@@ -1,6 +1,10 @@
 //		commands.c
 //********************************************
 #include "commands.h"
+#include <sys/stat.h>
+#include <sys/types.h>
+char PATH_[MAX_LINE_SIZE];
+char PATH_prev[MAX_LINE_SIZE];
 //********************************************
 // function name: ExeCmd
 // Description: interprets and executes built-in commands
@@ -14,8 +18,7 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 	char pwd[MAX_LINE_SIZE];
 	char* delimiters = " \t\n";  
 	int i = 0, num_arg = 0;
-	bool illegal_cmd = TRUE; // illegal command
-        char* PATH_;
+	bool illegal_cmd = FALSE; // illegal command
     	cmd = strtok(lineSize, delimiters);
 	if (cmd == NULL)
 		return 0; 
@@ -24,7 +27,7 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 	{
 		args[i] = strtok(NULL, delimiters); 
 		if (args[i] != NULL) 
-			num_arg++; 
+			num_arg++;  // TODO : check each fun for correct num_arg
  
 	}
 /*************************************************/
@@ -34,13 +37,27 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 /*************************************************/
 	if (!strcmp(cmd, "cd") ) 
 	{   
-            // TODO: add prev_PATH shit
-            PATH_ = args[1];
-            if (chdir(PATH_)==-1){
+            // This is the path_previous and path swapping place.
+            // The path variables must be global in scope in order to be changed
+            // This may lead to a buggy implement, will be fixed if enough time
+            // is given. for now it works TODO: refactor.
+            if (!strcmp(args[1], "-") )
+            {
+                strncpy(PATH_, PATH_prev, MAX_LINE_SIZE);
+            }
+            else
+            {
+                strncpy(PATH_, args[1], MAX_LINE_SIZE);
+            }
+            getcwd(PATH_prev, MAX_LINE_SIZE);
+            
+            if (chdir(PATH_)==-1)
+            {
                 printf("\"%s\" - path not found\n", PATH_);
                 return -1;
             }
-            else{
+            else
+            {
                 return 0;
             }
 	} 
@@ -56,7 +73,12 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 	/*************************************************/
 	else if (!strcmp(cmd, "mkdir"))
 	{
- 		
+            struct stat st = {0};
+            if (stat(args[1], &st) == -1) 
+            {
+                mkdir(args[1], 0700);
+            }
+            return 0;
 	}
 	/*************************************************/
 	
