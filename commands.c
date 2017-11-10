@@ -1,10 +1,10 @@
 //		commands.c
 //********************************************
 #include "commands.h"
-#include <sys/stat.h>
-#include <sys/types.h>
+
 char PATH_[MAX_LINE_SIZE];
 char PATH_prev[MAX_LINE_SIZE];
+//HISTORY history;
 //********************************************
 // function name: ExeCmd
 // Description: interprets and executes built-in commands
@@ -41,44 +41,66 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
             // The path variables must be global in scope in order to be changed
             // This may lead to a buggy implement, will be fixed if enough time
             // is given. for now it works TODO: refactor.
-            if (!strcmp(args[1], "-") )
+            if (num_arg==1)
             {
-                strncpy(PATH_, PATH_prev, MAX_LINE_SIZE);
+                if (!strcmp(args[1], "-") )
+                {
+                    strncpy(PATH_, PATH_prev, MAX_LINE_SIZE);
+                }
+                else
+                {
+                    strncpy(PATH_, args[1], MAX_LINE_SIZE);
+                }
+                getcwd(PATH_prev, MAX_LINE_SIZE);
+
+                if (chdir(PATH_)==-1)
+                {
+                    printf("\"%s\" - path not found\n", PATH_);
+                    return -1;
+                }
+                else
+                {
+                    return 0;
+                }
             }
             else
             {
-                strncpy(PATH_, args[1], MAX_LINE_SIZE);
+            illegal_cmd = TRUE;    
             }
-            getcwd(PATH_prev, MAX_LINE_SIZE);
-            
-            if (chdir(PATH_)==-1)
-            {
-                printf("\"%s\" - path not found\n", PATH_);
-                return -1;
-            }
-            else
-            {
-                return 0;
-            }
+
 	} 
 	
 	/*************************************************/
 	else if (!strcmp(cmd, "pwd")) 
 	{
-            getcwd(pwd, MAX_LINE_SIZE);
-            printf("%s\n",pwd);
-            return 0; //TODO: add error handling
+            if (num_arg==0)
+            {
+                getcwd(pwd, MAX_LINE_SIZE);
+                printf("%s\n",pwd);
+                return 0; //TODO: add error handling
+            }
+            else
+            {
+                illegal_cmd = TRUE;
+            }
 	}
 	
 	/*************************************************/
 	else if (!strcmp(cmd, "mkdir"))
 	{
-            struct stat st = {0};
-            if (stat(args[1], &st) == -1) 
+            if (num_arg == 1)
             {
-                mkdir(args[1], 0700);
+                struct stat st = {0};
+                if (stat(args[1], &st) == -1) 
+                {
+                    mkdir(args[1], 0700);
+                }
+                return 0;                
             }
-            return 0;
+            else
+            {
+                illegal_cmd = TRUE;
+            }
 	}
 	/*************************************************/
 	
@@ -89,10 +111,17 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 	/*************************************************/
 	else if (!strcmp(cmd, "showpid")) 
 	{
-            int smash_pid;
-            smash_pid = getpid();
-            printf("smash pid is %d/n", smash_pid);
-            return 0;
+            if (num_arg==0)
+            {
+                int smash_pid;
+                smash_pid = getpid();
+                printf("smash pid is %d\n", smash_pid);
+                return 0;                
+            }
+            else
+            {
+                illegal_cmd = TRUE;
+            }
 	}
 	/*************************************************/
 	else if (!strcmp(cmd, "fg")) 
@@ -105,6 +134,11 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
   		
 	}
 	/*************************************************/
+	else if (!strcmp(cmd, "history"))
+	{
+            //print_history(history);
+	} 
+        /*************************************************/
 	else if (!strcmp(cmd, "quit"))
 	{
    		
@@ -151,13 +185,14 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 					your code
 					*/
 			
-			default:
+		default:
                 	// Add your code here
-                            printf("This is external mode; could not find path");
-                            return execv(cmdString, args);
-					/* 
-					your code
-					*/
+                        printf("This is external mode; could not find path");
+                        execv(cmdString, args);
+                        return;
+			/* 
+        		your code
+			*/
 	}
 }
 //**************************************************************************************
