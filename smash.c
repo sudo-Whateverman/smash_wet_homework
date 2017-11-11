@@ -17,7 +17,7 @@ main file. This file contains the main function of smash
 char* L_Fg_Cmd;
 void* jobs = NULL; //This represents the list of jobs. Please change to a preferred type (e.g array of char*)
 char lineSize[MAX_LINE_SIZE]; 
-//HISTORY history;
+HISTORY history = {0, 0, 0, NULL,}; //Initialize the history to avoid unwanted behavior
 //**************************************************************************************
 // function name: main
 // Description: main function of smash. get command from user and calls command functions
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 		fgets(lineSize, MAX_LINE_SIZE, stdin);
 		strcpy(cmdString, lineSize);    	
 		cmdString[strlen(lineSize)-1]='\0';
-                // insert_history(history, cmdString);
+                insert_history( &history, cmdString);
 					// perform a complicated Command
 		if(!ExeComp(lineSize)) continue; 
 					// background command	

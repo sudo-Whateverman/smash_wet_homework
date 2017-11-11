@@ -5,25 +5,33 @@
  */
 #include "history.h"
 int temp;
-HISTORY history;
 char element[MAX_LINE_SIZE];
 
-void print_history(HISTORY history)
+void print_hist(HISTORY* history_)
 {
-    temp = history.front;
-    for(int i=0; (temp!=history.rear); i++)
-    {
-        temp = ((history.front + i)%MAX_HISTORY_SIZE);
-        printf("%s \n", history.entries[temp]);
+    temp = history_->front;
+    if (history_->size!=0){
+        while(temp!=history_->rear)
+        {
+            printf("%s \n", history_->entries[temp]);
+            temp = (temp + 1)% MAX_HISTORY_SIZE;
+        } 
     }
 }
 
-void insert_history(HISTORY history, char element)
+void insert_history(HISTORY* history_, char* element)
 {
-    history.rear = (history.rear + 1 )%MAX_HISTORY_SIZE;
-    if (history.rear == history.front){
-        history.front = (history.front + 1)%MAX_HISTORY_SIZE;
-        strncpy(history.entries[history.rear], element, MAX_LINE_SIZE);
+    if ((history_->size)<MAX_HISTORY_SIZE-1)
+    {
+        history_->size ++;
+        strncpy(history_->entries[history_->rear], element, MAX_LINE_SIZE);
+        history_->rear = (history_->rear + 1 )%MAX_HISTORY_SIZE;
+    }
+    else
+    {
+        strncpy(history_->entries[history_->rear], element, MAX_LINE_SIZE);
+        history_->rear = (history_->rear + 1 )%MAX_HISTORY_SIZE;
+        history_->front = (history_->front + 1)%MAX_HISTORY_SIZE;
     }
 }
  
