@@ -108,6 +108,25 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
         
     }
     /*************************************************/
+    
+    else if (!strcmp(cmd, "mv")) 
+    {
+        if (num_arg == 2)
+        {
+            if (!rename(args[1], args[2])){
+                printf("%s has been renamed %s\n", args[1], args[2]);
+            }
+            else
+            {
+                perror ("The following error occurred");
+            }
+        }
+        else
+        {
+            illegal_cmd = TRUE;
+        }
+    }
+    /*************************************************/
     else if (!strcmp(cmd, "showpid")) 
     {
         if (num_arg==0)
@@ -177,18 +196,22 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString, int num_args)
     {
         case -1: 
             // TODO : Add error code here
-            printf("error using fork please try again\n");
+            perror ("The following error occurred");
             break;
-
+            
         case 0 :
             setpgrp();
-            execv( args[0], args);
+            if (execv( args[0], args))
+            {
+                perror ("The following error occurred");
+            }
+            exit(&status);
             break;
             
         default:
             wait(&status);
             return;
-
+            
     }
 }
 //**************************************************************************************
@@ -213,17 +236,21 @@ int ExeComp(char* lineSize)
         switch(pID = fork()) 
         {
             case -1: 
-                printf("error using fork please try again\n");
+                perror ("The following error occurred");
                 break;
             case 0 :
                 setpgrp();
-                execv( args[0], args);
+                if (!execv( args[0], args))
+                {
+                    perror ("The following error occurred");
+                }
+                exit(&status);
                 break;
-
+                
             default:
                 wait(&status);
                 return 0;
-
+                
         }
         return 0;
     } 

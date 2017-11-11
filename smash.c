@@ -17,7 +17,7 @@ main file. This file contains the main function of smash
 char* L_Fg_Cmd;
 void* jobs = NULL; //This represents the list of jobs. Please change to a preferred type (e.g array of char*)
 char lineSize[MAX_LINE_SIZE]; 
-HISTORY history = {0, 0, 0, NULL,}; //Initialize the history to avoid unwanted behavior
+HISTORY history = {0, 0, 0, NULL}; //Initialize the history to avoid unwanted behavior
 //**************************************************************************************
 // function name: main
 // Description: main function of smash. get command from user and calls command functions
