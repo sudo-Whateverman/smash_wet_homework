@@ -10,7 +10,7 @@ char PATH_prev[MAX_LINE_SIZE];
 // Parameters: pointer to jobs, command string
 // Returns: 0 - success,1 - failure
 //**************************************************************************************
-int ExeCmd(void* jobs, char* lineSize, char* cmdString)
+int ExeCmd(char* lineSize, char* cmdString)
 {
     char* cmd; 
     char* args[MAX_ARG];
@@ -102,13 +102,6 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
         }
     }
     /*************************************************/
-    
-    else if (!strcmp(cmd, "jobs")) 
-    {
-        
-    }
-    /*************************************************/
-    
     else if (!strcmp(cmd, "mv")) 
     {
         if (num_arg == 2)
@@ -157,6 +150,18 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
         if (num_arg==0)
         {
             print_hist(&history);
+        }
+        else
+        {
+            illegal_cmd = TRUE;
+        }
+    } 
+    /*************************************************/
+    else if (!strcmp(cmd, "jobs"))
+    {
+        if (num_arg==0)
+        {
+            print_jobs(&jobs);
         }
         else
         {
@@ -261,10 +266,10 @@ int ExeComp(char* lineSize)
 //**************************************************************************************
 // function name: BgCmd
 // Description: if command is in background, insert the command to jobs
-// Parameters: command string, pointer to jobs
+// Parameters: command string // FIX IN OTHER PLACES
 // Returns: 0- BG command -1- if not
 //**************************************************************************************
-int BgCmd(char* lineSize, void* jobs)
+int BgCmd(char* lineSize)
 {
     
     char* Command;
@@ -274,8 +279,9 @@ int BgCmd(char* lineSize, void* jobs)
     {
         lineSize[strlen(lineSize)-2] = '\0';
         int pID;
-        int status;
         int i, num_arg;
+        JOB bg_job;
+        strncpy(bg_job.cmdLine, lineSize, MAX_LINE_SIZE);
         Command = strtok(lineSize, delimiters);
         if (Command == NULL)
             return 0; 
@@ -296,6 +302,7 @@ int BgCmd(char* lineSize, void* jobs)
                 
             case 0 :
                 setpgrp();
+
                 if (execvp( args[0], args))
                 {
                     perror ("The following error occurred");
@@ -304,6 +311,11 @@ int BgCmd(char* lineSize, void* jobs)
                 break;
                 
             default:
+                bg_job.pid = pID;
+                bg_job.starting_time = time(NULL);
+                bg_job.status = 0;
+                printf("Started %s at pid %d\n", bg_job.cmdLine, bg_job.pid );
+                insert_job(&jobs, bg_job);
                 break;
                 
         }

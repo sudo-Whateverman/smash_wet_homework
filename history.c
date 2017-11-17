@@ -10,7 +10,8 @@ char element[MAX_LINE_SIZE];
 void print_hist(HISTORY* history_)
 {
     temp = history_->front;
-    if (history_->size!=0){
+    if (history_->size!=0)
+    {
         while(temp!=history_->rear)
         {
             printf("%s \n", history_->entries[temp]);

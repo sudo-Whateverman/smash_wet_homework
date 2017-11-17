@@ -11,20 +11,16 @@
 #include "commands.h"
 #include "signals.h"
 #include "history.h"
+#include "jobs_list.h"
 #define MAX_LINE_SIZE 80
 #define MAXARGS 20
 
 
-typedef struct _job{
-    int pid;
-    int starting_time;
-    char cmdLine[MAX_LINE_SIZE];
-} JOB;
+
 char* L_Fg_Cmd;
-JOB* jobs = NULL; //This represents the list of jobs. Please change to a preferred type (e.g array of char*)
 char lineSize[MAX_LINE_SIZE]; 
 HISTORY history; //Initialize the history to avoid unwanted behavior
-int ctrl_z_count;
+JOB_LIST jobs; //This represents the list of jobs. 
 
 
 //**************************************************************************************
@@ -80,11 +76,11 @@ int main(int argc, char *argv[])
         cmdString[strlen(lineSize)-1]='\0';
         insert_history( &history, cmdString);
         // background command	
-        if(!BgCmd(lineSize, jobs)) continue; 
+        if(!BgCmd(lineSize)) continue; 
         // perform a complicated Command
         if(!ExeComp(lineSize)) continue; 
         // built in commands
-        ExeCmd(jobs, lineSize, cmdString);
+        ExeCmd(lineSize, cmdString);
         
         /* initialize for next line read*/
         lineSize[0]='\0';
