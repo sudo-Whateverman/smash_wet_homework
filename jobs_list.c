@@ -43,12 +43,21 @@ void print_jobs(JOB_LIST* job_list_)
         if (waitpid(job.pid, &status, WNOHANG) != 0)
         {
             job_list_->jobs[i].status = 2;
-                    
+            
         }
         else
         {
             int time_elapsed = time( NULL ) - job.starting_time;
-            printf("[%d] %s : %d %d secs \n", i, job.cmdLine, job.pid, time_elapsed );
+            if (job.status == 1)
+            {
+                printf("[%d] %s : %d %d secs (Stopped) \n"
+                        , i, job.cmdLine, job.pid, time_elapsed );
+            }
+            else
+            {
+                printf("[%d] %s : %d %d secs \n"
+                        , i, job.cmdLine, job.pid, time_elapsed );
+            }
         }
         
     }

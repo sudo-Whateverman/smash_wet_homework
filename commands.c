@@ -311,6 +311,7 @@ int BgCmd(char* lineSize)
                 break;
                 
             default:
+                kill(pID, SIGSTOP);
                 bg_job.pid = pID;
                 bg_job.starting_time = time(NULL);
                 bg_job.status = 0;

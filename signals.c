@@ -12,9 +12,11 @@ void catch_suspend(int sig_num) {
     sigset_t old_set; /* used to store the old mask set. */
     sigfillset(&mask_set);
     sigprocmask(SIG_SETMASK, &mask_set, &old_set);
-    pause();
+    /* print the current Ctrl-Z counter */
+    printf("\n\n Ctrl-Z pressed\n\n");
     fflush(stdout);
     sigprocmask(SIG_SETMASK,&old_set, &mask_set);
+
 }
 
 void catch_int(int sig_num) {
