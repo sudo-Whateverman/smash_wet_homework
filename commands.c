@@ -17,7 +17,7 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
     char pwd[MAX_LINE_SIZE];
     char* delimiters = " \t\n";  
     int i = 0, num_arg = 0;
-    bool illegal_cmd = FALSE; // illegal command
+    bool illegal_cmd = FALSE;
     cmd = strtok(lineSize, delimiters);
     if (cmd == NULL)
         return 0; 
@@ -76,7 +76,7 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
         {
             getcwd(pwd, MAX_LINE_SIZE);
             printf("%s\n",pwd);
-            return 0; //TODO: add error handling
+            return 0; 
         }
         else
         {
@@ -169,7 +169,7 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
         
     } 
     /*************************************************/
-    else // external command
+    else 
     {
         ExeExternal(args, cmdString, num_arg);
         return 0;
@@ -187,7 +187,7 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 // Parameters: external command arguments, external command string
 // Returns: void
 //**************************************************************************************
-void ExeExternal(char *args[MAX_ARG], char* cmdString, int num_args)
+int ExeExternal(char *args[MAX_ARG], char* cmdString, int num_args)
 {
     int pID;
     int status;
@@ -201,18 +201,20 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString, int num_args)
             
         case 0 :
             setpgrp();
-            if (execv( args[0], args))
+            if (execvp( args[0], args))
             {
                 perror ("The following error occurred");
             }
-            exit(&status);
+            exit(0);
             break;
             
         default:
+            
             wait(&status);
-            return;
+            return status;
             
     }
+    return 0;
 }
 //**************************************************************************************
 // function name: ExeComp
@@ -227,7 +229,7 @@ int ExeComp(char* lineSize)
 	char* args[5];
         int pID;
         int status;
-        args[0] = "/bin/csh";
+        args[0] = "/bin/sh";
         args[1] = "-f";
         args[2] = "-c";
         args[3] = lineSize;
@@ -244,7 +246,7 @@ int ExeComp(char* lineSize)
                 {
                     perror ("The following error occurred");
                 }
-                exit(&status);
+                exit(0);
                 break;
                 
             default:
@@ -271,13 +273,42 @@ int BgCmd(char* lineSize, void* jobs)
     if (lineSize[strlen(lineSize)-2] == '&')
     {
         lineSize[strlen(lineSize)-2] = '\0';
-        // Add your code here (execute a in the background)
-        
-        /* 
-         your code
-         */
-        
+        int pID;
+        int status;
+        int i, num_arg;
+        Command = strtok(lineSize, delimiters);
+        if (Command == NULL)
+            return 0; 
+        args[0] = Command;
+        for (i=1; i<MAX_ARG; i++)
+        {
+            args[i] = strtok(NULL, delimiters); 
+            if (args[i] != NULL) 
+                num_arg++;  // TODO : check each fun for correct num_arg
+        }
+        args[num_arg + 1] = NULL;
+        switch(pID = fork()) 
+        {
+            case -1: 
+                // TODO : Add error code here
+                perror ("The following error occurred");
+                break;
+                
+            case 0 :
+                setpgrp();
+                if (execvp( args[0], args))
+                {
+                    perror ("The following error occurred");
+                }
+                exit(0);
+                break;
+                
+            default:
+                break;
+                
+        }
+        return 0;
     }
     return -1;
 }
-
+    

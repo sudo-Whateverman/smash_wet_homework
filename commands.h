@@ -16,6 +16,6 @@ typedef enum { FALSE , TRUE } bool;
 int ExeComp(char* lineSize);
 int BgCmd(char* lineSize, void* jobs);
 int ExeCmd(void* jobs, char* lineSize, char* cmdString);
-void ExeExternal(char *args[MAX_ARG], char* cmdString, int num_args);
+int ExeExternal(char *args[MAX_ARG], char* cmdString, int num_args);
 #endif
 
