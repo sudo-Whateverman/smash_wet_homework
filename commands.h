@@ -17,7 +17,8 @@ typedef enum { FALSE , TRUE } bool;
 int ExeComp(char* lineSize);
 int BgCmd(char* lineSize);
 int ExeCmd(char* lineSize, char* cmdString);
-int ExeExternal(char *args[MAX_ARG], char* cmdString, int num_args);
+int ExeExternal(char *args[MAX_ARG], int num_args);
 extern JOB_LIST jobs;
+extern char *sigtranslation_[];
 #endif
 

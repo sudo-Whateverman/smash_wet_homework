@@ -13,13 +13,16 @@ void catch_suspend(int sig_num) {
     sigfillset(&mask_set);
     sigprocmask(SIG_SETMASK, &mask_set, &old_set);
     /* print the current Ctrl-Z counter */
-    printf("\n\n Ctrl-Z pressed\n\n");
+    printf("\n\n Ctrl-Z pressed\n\n %d\n", sig_num);
     fflush(stdout);
     sigprocmask(SIG_SETMASK,&old_set, &mask_set);
 
 }
 
 void catch_int(int sig_num) {
-    printf("Got that ^C\n");
+    printf("Got that ^C\n%d\n", sig_num);
 }
 
+void placeholder(int sig_num) {
+    printf("Got a signal number %d\n", sig_num);
+}

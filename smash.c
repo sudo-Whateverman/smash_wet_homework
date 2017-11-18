@@ -21,7 +21,12 @@ char* L_Fg_Cmd;
 char lineSize[MAX_LINE_SIZE]; 
 HISTORY history; //Initialize the history to avoid unwanted behavior
 JOB_LIST jobs; //This represents the list of jobs. 
-
+// A global signum to signame translation. 
+char *sigtranslation_[]={"INVALID", "SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP",
+"SIGABRT", "SIGBUS", "SIGFPE", "SIGKILL", "SIGUSR1", "SIGSEGV", "SIGUSR2",
+"SIGPIPE", "SIGALRM", "SIGTERM", "SIGSTKFLT", "SIGCHLD", "SIGCONT", "SIGSTOP",
+"SIGTSTP", "SIGTTIN", "SIGTTOU", "SIGURG", "SIGXCPU", "SIGXFSZ", "SIGVTALRM",
+"SIGPROF", "SIGWINCH", "SIGPOLL", "SIGPWR", "SIGSYS", NULL};
 
 //**************************************************************************************
 // function name: main
@@ -30,7 +35,8 @@ JOB_LIST jobs; //This represents the list of jobs.
 int main(int argc, char *argv[])
 {
     char cmdString[MAX_LINE_SIZE]; 	   
-    
+    (void)argc;
+    (void)argv;
     
     //signal declarations
     //NOTE: the signal handlers and the function/s
@@ -39,22 +45,22 @@ int main(int argc, char *argv[])
     
     // ^C signal, stop execution
     struct sigaction SIGINT_handler;
-    SIGINT_handler.sa_handler = &catch_int;
+    SIGINT_handler.sa_handler = &placeholder;
     sigaction(SIGINT, &SIGINT_handler, NULL);
     
     // ^Z signal, go to sleep
     struct sigaction SIGTSTP_handler;
-    SIGTSTP_handler.sa_handler = &catch_suspend;
+    SIGTSTP_handler.sa_handler = &placeholder;
     sigaction(SIGTSTP, &SIGTSTP_handler, NULL);
     
     // Quit the shell
     struct sigaction SIGQUIT_handler;
-    SIGQUIT_handler.sa_handler = &catch_int;
+    SIGQUIT_handler.sa_handler = &placeholder;
     sigaction(SIGQUIT, &SIGQUIT_handler, NULL);
     
     // Resume foreground.
     struct sigaction SIGCONT_handler;
-    SIGCONT_handler.sa_handler = &catch_int;
+    SIGCONT_handler.sa_handler = &placeholder;
     sigaction(SIGCONT, &SIGCONT_handler, NULL);
     
     
@@ -63,16 +69,16 @@ int main(int argc, char *argv[])
     
     
     
-    L_Fg_Cmd =(char*)malloc(sizeof(char)*(MAX_LINE_SIZE+1));
-    if (L_Fg_Cmd == NULL) 
-        exit (-1); 
-    L_Fg_Cmd[0] = '\0';
+//    L_Fg_Cmd =(char*)malloc(sizeof(char)*(MAX_LINE_SIZE+1));
+//    if (L_Fg_Cmd == NULL) 
+//        exit (-1); 
+//    L_Fg_Cmd[0] = '\0';
     
     while (1)
     {
         printf("smash > ");
         fgets(lineSize, MAX_LINE_SIZE, stdin);
-        strcpy(cmdString, lineSize);    	
+        strncpy(cmdString, lineSize, MAX_LINE_SIZE);    	
         cmdString[strlen(lineSize)-1]='\0';
         insert_history( &history, cmdString);
         // background command	
@@ -96,4 +102,6 @@ int main(int argc, char *argv[])
 //4) Test background and foreground runs
 //5) implement fg, bg, quit, jobs
 //6) Test on virtual box of the course.
+//7) Change & behaviour to put in bg.
+//8) add Stopped on status.
 

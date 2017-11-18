@@ -135,14 +135,70 @@ int ExeCmd(char* lineSize, char* cmdString)
         }
     }
     /*************************************************/
+    // The difference from fg to bg would be a blocking wait or not.
+    // Since both ar = 0 and 1 are similiar, I should refactor the function.
     else if (!strcmp(cmd, "fg")) 
     {
+        int status, endID;
+        if (num_arg==0)
+        {
+            JOB job = jobs.jobs[jobs.front-1];
+            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job.pid);
+            kill( job.pid, SIGCONT);
+            while ( endID!= job.pid){
+                endID = waitpid( job.pid, &status, WNOHANG);
+                if (endID == -1) 
+                {/* error calling waitpid       */
+                    perror("waitpid error");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            return status;
+        }
+        else if (num_arg==1)
+        {
+            int index = atoi(args[1]);
+            JOB job = jobs.jobs[index];
+            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job.pid);
+            kill( job.pid, SIGCONT);
+            while ( endID!= job.pid){
+                endID = waitpid( job.pid, &status, WNOHANG);
+                if (endID == -1) 
+                {/* error calling waitpid       */
+                    perror("waitpid error");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            return status;
+        }
+        else
+        {
+            illegal_cmd = TRUE;
+        }
         
     } 
     /*************************************************/
     else if (!strcmp(cmd, "bg")) 
     {
-        
+        if (num_arg==0)
+        {
+            JOB job = jobs.jobs[jobs.front];
+            kill( job.pid, SIGCONT);            
+            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job.pid);
+            return 0;
+        }
+        else if (num_arg==1)
+        {
+            int index = atoi(args[1]);
+            JOB job = jobs.jobs[index];
+            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job.pid);            
+            kill( job.pid, SIGCONT);
+            return 0;
+        }
+        else
+        {
+            illegal_cmd = TRUE;
+        }
     }
     /*************************************************/
     else if (!strcmp(cmd, "history"))
@@ -171,12 +227,76 @@ int ExeCmd(char* lineSize, char* cmdString)
     /*************************************************/
     else if (!strcmp(cmd, "quit"))
     {
-        
+        if (num_arg==0)
+        {
+            exit(0);
+        }
+        else if (num_arg==1 && !strcmp(args[1], "kill"))
+        {
+            JOB job;
+            int status;
+            for (int i=0; i<jobs.front; i++){
+                if (job.status != 2){
+                    job = jobs.jobs[i];
+                    printf("[%d] %s - Sending SIGTERM...", i, job.cmdLine);
+                    kill(job.pid, SIGTERM);
+                    fflush(stdout);
+                    sleep(5);
+                    int endID = waitpid( job.pid, &status, WNOHANG);
+                    if (endID != job.pid)
+                    {
+                        printf("(5 sec passed) Sending SIGKILL...");
+                        fflush(stdout);
+                        kill(job.pid, SIGKILL);
+                    }
+                    printf("Done.\n");
+                }
+            }
+            fflush(stdout);
+            exit(0);
+        }
+        else
+        {
+            illegal_cmd = TRUE;
+        }
+    } 
+        /*************************************************/
+    else if (!strcmp(cmd, "kill"))
+    {
+        if (num_arg==2)
+        {
+            JOB job;
+            char signal_name[MAX_LINE_SIZE];
+            int index, signal_;
+            index = atoi(args[2]);
+            strncpy(signal_name, &args[1][1], strlen(args[1])-1); // dirty Hack...
+            signal_ = atoi(signal_name);
+            job = jobs.jobs[index];
+            if (job.pid == 0){
+                printf("‫‪smash‬‬ ‫‪error:‬‬ ‫>‬ ‫‪kill‬‬ ‫‪job‬‬ %d ‫‪job‬‬ ‫‪does‬‬ ‫‪not‬‬ ‫‪exist‬‬\n", index);
+                return -1;
+            }
+            else if (kill(job.pid, signal_))
+            {
+               printf("‫‪smash‬‬ ‫‪error:‬‬ ‫>‬ ‫‪kill‬‬ ‫‪job‬‬ %d ‫‪cannot‬‬ ‫‪send‬‬ ‫‪signal‬‬\n", index);
+               return -1;
+            }
+            else
+            {
+                printf("‫‪signal‬‬ %s ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d\n",
+                        sigtranslation_[signal_], job.pid );               
+                return 0;
+            }
+        }
+        else
+        {
+            illegal_cmd = TRUE;
+        }
     } 
     /*************************************************/
     else 
     {
-        ExeExternal(args, cmdString, num_arg);
+        ExeExternal(args, num_arg);
         return 0;
     }
     if (illegal_cmd == TRUE)
@@ -192,7 +312,7 @@ int ExeCmd(char* lineSize, char* cmdString)
 // Parameters: external command arguments, external command string
 // Returns: void
 //**************************************************************************************
-int ExeExternal(char *args[MAX_ARG], char* cmdString, int num_args)
+int ExeExternal(char *args[MAX_ARG], int num_args)
 {
     int pID;
     int status;
@@ -302,7 +422,7 @@ int BgCmd(char* lineSize)
                 
             case 0 :
                 setpgrp();
-
+                
                 if (execvp( args[0], args))
                 {
                     perror ("The following error occurred");
@@ -324,4 +444,4 @@ int BgCmd(char* lineSize)
     }
     return -1;
 }
-    
+
