@@ -97,11 +97,11 @@ int main(int argc, char *argv[])
 
 //Project backlog:
 //1) Add signal handlers. 
-//2) Run all stuff in ExeComp in fg, waitpid fr child.
-//3) Run stuff in background fpr BgCmd
+//2) Run all stuff in ExeComp in fg, waitpid f0r child.
+//3) Run stuff in background f0r BgCmd
 //4) Test background and foreground runs
 //5) implement fg, bg, quit, jobs
 //6) Test on virtual box of the course.
-//7) Change & behaviour to put in bg.
+//7) Change & behavior to put in bg.
 //8) add Stopped on status.
 

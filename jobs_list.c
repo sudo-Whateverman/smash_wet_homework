@@ -13,7 +13,12 @@
 
 #include "jobs_list.h"
 
-
+//********************************************
+// function name: insert_job
+// Description: inserts a job object into global object list
+// Parameters: pointer to jobs, job object
+// Returns: void
+//********************************************
 void insert_job(JOB_LIST* job_list_, JOB job_)
 {
     if ((job_list_->size)<MAX_JOBS_LIST)
@@ -34,6 +39,12 @@ void insert_job(JOB_LIST* job_list_, JOB job_)
     }
 }
 
+//********************************************
+// function name: print_jobs
+// Description: prints all live jobs
+// Parameters: pointer to jobs
+// Returns: void
+//********************************************
 void print_jobs(JOB_LIST* job_list_)
 {
     JOB job;
@@ -43,11 +54,14 @@ void print_jobs(JOB_LIST* job_list_)
         if (waitpid(job.pid, &status, WNOHANG) != 0)
         {
             job_list_->jobs[i].status = 2;
-            
+            // if the job is dead, pass the status to become 2 - Terminated
+            // And don't print it.
         }
         else
         {
             int time_elapsed = time( NULL ) - job.starting_time;
+            // elapsed seconds is self time from epoch deducted from
+            // current time since epoch.
             if (job.status == 1)
             {
                 printf("[%d] %s : %d %d secs (Stopped) \n"
