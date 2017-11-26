@@ -118,7 +118,7 @@ int ExeCmd(char* lineSize, char* cmdString)
                 else
                 {
                     return 0;                
-
+                    
                 }
             }
             else
@@ -175,6 +175,8 @@ int ExeCmd(char* lineSize, char* cmdString)
     else if (!strcmp(cmd, "fg")) 
     {
         int status, endID;
+        signal(SIGINT , kill_and_run);
+        signal(SIGTSTP, kill_and_run);
         if (num_arg==0)
         {
             JOB job = jobs.jobs[jobs.front-1];
@@ -306,7 +308,7 @@ int ExeCmd(char* lineSize, char* cmdString)
             illegal_cmd = TRUE;
         }
     } 
-        /*************************************************/
+    /*************************************************/
     else if (!strcmp(cmd, "kill"))
     {
         if (num_arg==2)
@@ -326,8 +328,8 @@ int ExeCmd(char* lineSize, char* cmdString)
             }
             else if (kill(job.pid, signal_))
             {
-               printf("‫‪smash‬‬ ‫‪error:‬‬ ‫>‬ ‫‪kill‬‬ ‫‪job‬‬ %d ‫‪cannot‬‬ ‫‪send‬‬ ‫‪signal‬‬\n", index);
-               return 1;
+                printf("‫‪smash‬‬ ‫‪error:‬‬ ‫>‬ ‫‪kill‬‬ ‫‪job‬‬ %d ‫‪cannot‬‬ ‫‪send‬‬ ‫‪signal‬‬\n", index);
+                return 1;
             }
             else
             {
@@ -401,20 +403,26 @@ int ExeComp(char* lineSize)
     if ((strstr(lineSize, "|")) || (strstr(lineSize, "<")) || (strstr(lineSize, ">")) || (strstr(lineSize, "*")) || (strstr(lineSize, "?")) || (strstr(lineSize, ">>")) || (strstr(lineSize, "|&")))
     {
 	char* args[5];
-        int pID;
+        int pID, w;
         int status;
+        JOB job;                
         args[0] = "/bin/sh";
         args[1] = "-f";
         args[2] = "-c";
         args[3] = lineSize;
         args[3][strlen(lineSize)-1]='\0';
         args[4] = NULL;
+        signal(SIGINT , kill_and_run);
+        signal(SIGTSTP, kill_and_run);
+
         switch(pID = fork()) 
         {
             case -1: 
                 perror ("The following error occurred");
                 break;
             case 0 :
+                signal(SIGINT , SIG_DFL);
+                signal(SIGTSTP, SIG_DFL);
                 setpgrp();
                 if (!execv( args[0], args))
                 {
@@ -424,12 +432,49 @@ int ExeComp(char* lineSize)
                 break;
                 
             default:
-                wait(&status);
+                // Insert the job to init the pid as global.
+                strcpy(job.cmdLine, lineSize);
+                job.pid = pID;
+                job.starting_time = time(NULL);
+                job.status = 0;
+                insert_job(&jobs, job);
+                // set handler to pass kill
+                
+                //                waitpid(job.pid, &status, WUNTRACED);
+                do {
+                    w = waitpid(job.pid, &status, WUNTRACED);
+                    if (w == -1) 
+                    {
+                        perror("waitpid");
+                        exit(EXIT_FAILURE); 
+                    }
+                    if (WIFEXITED(status)) 
+                    {
+                        printf("exited, status=%d\n", WEXITSTATUS(status));
+                        break;
+                    }
+                    else if (WIFSIGNALED(status)) 
+                    {
+                        printf("killed by signal %d\n", WTERMSIG(status));
+                        break;
+                    }
+                    else if (WIFSTOPPED(status)) 
+                    {
+                        printf("stopped by signal %d\n", WSTOPSIG(status));
+                        break;
+                    }
+                } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+                signal(SIGINT , SIG_IGN);
+                signal(SIGTSTP, SIG_IGN);
                 return 0;
                 
         }
+        signal(SIGINT , SIG_IGN);
+        signal(SIGTSTP, SIG_IGN);
         return 0;
     } 
+    signal(SIGINT , SIG_IGN);
+    signal(SIGTSTP, SIG_IGN);
     return -1;
 }
 //**************************************************************************************
@@ -480,7 +525,7 @@ int BgCmd(char* lineSize)
                 break;
                 
             default:
-                kill(pID, SIGSTOP);  // TO DO : delete this from here.
+                kill(pID, SIGTSTP);  // TO DO : delete this from here.
                 bg_job.pid = pID;
                 bg_job.starting_time = time(NULL);
                 bg_job.status = 0;

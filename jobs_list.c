@@ -76,3 +76,7 @@ void print_jobs(JOB_LIST* job_list_)
         
     }
 }
+
+void delete_job(JOB_LIST* job_list_){
+    
+}

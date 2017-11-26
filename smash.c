@@ -45,24 +45,15 @@ int main(int argc, char *argv[])
     
     // ^C signal, stop execution
     struct sigaction SIGINT_handler;
-    SIGINT_handler.sa_handler = &placeholder;
+    SIGINT_handler.sa_handler = SIG_IGN;
     sigaction(SIGINT, &SIGINT_handler, NULL);
     
     // ^Z signal, go to sleep
     struct sigaction SIGTSTP_handler;
-    SIGTSTP_handler.sa_handler = &placeholder;
+    SIGTSTP_handler.sa_handler = SIG_IGN;
     sigaction(SIGTSTP, &SIGTSTP_handler, NULL);
-    
-    // Quit the shell
-    struct sigaction SIGQUIT_handler;
-    SIGQUIT_handler.sa_handler = &placeholder;
-    sigaction(SIGQUIT, &SIGQUIT_handler, NULL);
-    
-    // Resume foreground.
-    struct sigaction SIGCONT_handler;
-    SIGCONT_handler.sa_handler = &placeholder;
-    sigaction(SIGCONT, &SIGCONT_handler, NULL);
-    
+
+  
     
     /************************************/
     // Init globals 
