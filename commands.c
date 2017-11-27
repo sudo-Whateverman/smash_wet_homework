@@ -179,7 +179,7 @@ int ExeCmd(char* lineSize, char* cmdString)
         signal(SIGTSTP, kill_and_run);
         if (num_arg==0)
         {
-            JOB_LL* job = pop_job(jobs);
+            JOB_LL* job = pop_job();
             if (job == NULL)
             {
                 printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ cannot be sent");
@@ -191,7 +191,7 @@ int ExeCmd(char* lineSize, char* cmdString)
             job->status = 0;
             // check to see if process has returned.
             while ( endID!= job->pid){
-                endID = waitpid( job->pid, &status, WNOHANG);
+                endID = waitpid( job->pid, &status, WUNTRACED);
                 if (endID == -1) 
                 {/* error calling waitpid       */
                     perror("waitpid error");
@@ -207,7 +207,7 @@ int ExeCmd(char* lineSize, char* cmdString)
         else if (num_arg==1)
         {
             int index = atoi(args[1]);
-            JOB_LL* job = pop_job_by_id(jobs, index);
+            JOB_LL* job = pop_job_by_id(index);
             if (job == NULL)
             {
                 printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ cannot be sent");
@@ -217,7 +217,7 @@ int ExeCmd(char* lineSize, char* cmdString)
             kill( job->pid, SIGCONT);
             job->status = 0;
             while ( endID!= job->pid){
-                endID = waitpid( job->pid, &status, WNOHANG);
+                endID = waitpid( job->pid, &status, WUNTRACED);
                 if (endID == -1) 
                 {/* error calling waitpid       */
                     perror("waitpid error");
@@ -238,7 +238,7 @@ int ExeCmd(char* lineSize, char* cmdString)
         // Same as fg, but don't wait on the process.
         if (num_arg==0)
         {
-            JOB_LL* job = pop_job(jobs);
+            JOB_LL* job = pop_job();
             if (job == NULL)
             {
                 printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ cannot be sent");
@@ -251,7 +251,7 @@ int ExeCmd(char* lineSize, char* cmdString)
         else if (num_arg==1)
         {
             int index = atoi(args[1]);
-            JOB_LL* job = pop_job_by_id(jobs, index);
+            JOB_LL* job = pop_job_by_id( index);
             if (job == NULL)
             {
                 printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ cannot be sent");
@@ -285,7 +285,8 @@ int ExeCmd(char* lineSize, char* cmdString)
         if (num_arg==0)
         {
             // see documentation at helper function job_list.c
-            print_jobs(jobs);
+            print_jobs();
+            return 0;
         }
         else
         {
@@ -350,7 +351,7 @@ int ExeCmd(char* lineSize, char* cmdString)
             // basicaly it truncates the string exluding the '-' sign and then
             // passes the string to parse.
             signal_ = atoi(signal_name);
-            job = pop_job_by_id(jobs, index);
+            job = pop_job_by_id( index);
             if (job->pid == 0){
                 printf("‫‪smash‬‬ ‫‪error:‬‬ ‫>‬ ‫‪kill‬‬ ‫‪job‬‬ %d ‫‪job‬‬ ‫‪does‬‬ ‫‪not‬‬ ‫‪exist‬‬\n", index);
                 return 1;
@@ -397,6 +398,8 @@ int ExeExternal(char *args[MAX_ARG], int num_args)
     int pID;
     int status;
     args[num_args + 1] = NULL;
+    signal(SIGINT , kill_and_run);
+    signal(SIGTSTP, kill_and_run);
     switch(pID = fork()) 
     {
         case -1: 
@@ -406,6 +409,8 @@ int ExeExternal(char *args[MAX_ARG], int num_args)
             
         case 0 :
             setpgrp();
+            signal(SIGINT , SIG_DFL);
+            signal(SIGTSTP, SIG_DFL);
             if (execvp( args[0], args))
             {
                 perror ("The following error occurred");
@@ -414,8 +419,10 @@ int ExeExternal(char *args[MAX_ARG], int num_args)
             break;
             
         default:
-            insert_job(jobs, pID, time(NULL), args[0], 0);
-            wait(&status);
+            insert_job( pID, time(NULL), args[0], 0);
+            waitpid(pID, &status, 0);
+            signal(SIGINT , SIG_IGN);
+            signal(SIGTSTP, SIG_IGN);
             return status;
             
     }
@@ -442,16 +449,16 @@ int ExeComp(char* lineSize)
         args[4] = NULL;
         signal(SIGINT , kill_and_run);
         signal(SIGTSTP, kill_and_run);
-
+        
         switch(pID = fork()) 
         {
             case -1: 
                 perror ("The following error occurred");
                 break;
             case 0 :
+                setpgrp();
                 signal(SIGINT , SIG_DFL);
                 signal(SIGTSTP, SIG_DFL);
-                setpgrp();
                 if (!execv( args[0], args))
                 {
                     perror ("The following error occurred");
@@ -461,7 +468,7 @@ int ExeComp(char* lineSize)
                 
             default:
                 // Insert the job to init the pid as global.
-                insert_job(jobs, pID, time(NULL), lineSize, 0);
+                insert_job( pID, time(NULL), lineSize, 0);
                 // set handler to pass kill
                 
                 do {
@@ -473,17 +480,17 @@ int ExeComp(char* lineSize)
                     }
                     if (WIFEXITED(status)) 
                     {
-                        printf("exited, status=%d\n", WEXITSTATUS(status));
+//                        printf("exited, status=%d\n", WEXITSTATUS(status));
                         break;
                     }
                     else if (WIFSIGNALED(status)) 
                     {
-                        printf("killed by signal %d\n", WTERMSIG(status));
+//                        printf("killed by signal %d\n", WTERMSIG(status));
                         break;
                     }
                     else if (WIFSTOPPED(status)) 
                     {
-                        printf("stopped by signal %d\n", WSTOPSIG(status));
+//                        printf("stopped by signal %d\n", WSTOPSIG(status));
                         break;
                     }
                 } while (!WIFEXITED(status) && !WIFSIGNALED(status));
@@ -540,6 +547,8 @@ int BgCmd(char* lineSize)
             case 0 :
                 setpgrp();
                 
+                signal(SIGINT , SIG_DFL);
+                signal(SIGTSTP, SIG_DFL);
                 if (execvp( args[0], args))
                 {
                     perror ("The following error occurred");
@@ -548,7 +557,7 @@ int BgCmd(char* lineSize)
                 break;
                 
             default:
-                insert_job(jobs, pID, time(NULL), cmdLine, 0);
+                insert_job( pID, time(NULL), cmdLine, 0);
                 break;
                 
         }

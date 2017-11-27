@@ -20,7 +20,7 @@
 char* L_Fg_Cmd;
 char lineSize[MAX_LINE_SIZE]; 
 HISTORY history; //Initialize the history to avoid unwanted behavior
-JOB_LL* jobs; //This represents the list of jobs. 
+JOB_LL* jobs = NULL;
 // A global signum to signame translation. 
 char *sigtranslation_[]={"INVALID", "SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP",
 "SIGABRT", "SIGBUS", "SIGFPE", "SIGKILL", "SIGUSR1", "SIGSEGV", "SIGUSR2",

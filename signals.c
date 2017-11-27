@@ -29,7 +29,7 @@ void placeholder(int sig_num) {
 
 void kill_and_run(int signum){
     JOB_LL *job;
-    job = pop_job(jobs);
+    job = pop_job();
     if(job == NULL){
         return;
     }
@@ -37,7 +37,7 @@ void kill_and_run(int signum){
             sigtranslation_[signum], job->pid ); 
     if (signum == 2)
     {
-        delete_job_by_pid(jobs, job->pid);
+        delete_job_by_pid(job->pid);
         kill(job->pid, SIGTERM); // This is a hacky way. Should use SIGINT instead, but it does not kill the process.
 
     }

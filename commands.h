@@ -19,7 +19,7 @@ int ExeComp(char* lineSize);
 int BgCmd(char* lineSize);
 int ExeCmd(char* lineSize, char* cmdString);
 int ExeExternal(char *args[MAX_ARG], int num_args);
-extern JOB_LL *jobs;
+extern JOB_LL* jobs;
 extern char *sigtranslation_[];
 extern struct sigaction SIGTSTP_handler;
 extern struct sigaction SIGINT_handler;

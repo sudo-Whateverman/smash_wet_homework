@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #define JOBS_LINKED_LIST_H
 #define MAX_LINE_SIZE 80
-
 typedef struct _job{
     int pid;
     int starting_time;
@@ -30,14 +29,15 @@ typedef struct _job{
     struct _job* next;
 } JOB_LL;
 
+extern JOB_LL* jobs;
 JOB_LL* createJOB(int pid, int starting_time, char* cmdLine, int status);
-void print_jobs(JOB_LL* job_list_head);
-void insert_job(JOB_LL* job_list_head, int pid, int starting_time, char* cmdLine, int status);
-void delete_job(JOB_LL* job_list_head, int index);
-void delete_job_by_pid(JOB_LL* job_list_head, int pid);
-JOB_LL* pop_job(JOB_LL* job_list_head);
-JOB_LL* pop_job_by_id(JOB_LL* job_list_head, int id);
-JOB_LL* pop_job_by_pid(JOB_LL* job_list_head, int pid);
+void print_jobs(void);
+void insert_job(int pid, int starting_time, char* cmdLine, int status);
+void delete_job(int index);
+void delete_job_by_pid(int pid);
+JOB_LL* pop_job(void);
+JOB_LL* pop_job_by_id(int id);
+JOB_LL* pop_job_by_pid(int pid);
 
 
 

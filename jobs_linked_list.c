@@ -25,27 +25,27 @@ JOB_LL* createJOB(int pid, int starting_time, char* cmdLine, int status)
     temp->status = status;
     return temp;//return the new node
 }
-void insert_job(JOB_LL* job_list_head, int pid, int starting_time, char* cmdLine, int status)
+void insert_job(int pid, int starting_time, char* cmdLine, int status)
 {
     JOB_LL *p, *temp;
     temp = createJOB(pid, starting_time, cmdLine, status);
-    if(job_list_head == NULL){
-        job_list_head = temp;     //when linked list is empty
+    if(jobs == NULL){
+        jobs = temp;     //when linked list is empty
     }
     else{
-        p  = job_list_head;//assign head to p 
+        p  = jobs;//assign head to p 
         while(p->next != NULL){
             p = p->next;//traverse the list until p is the last node.The last node always points to NULL.
         }
         p->next = temp;//Point the previous last node to the new node created.
     }
 }
-void delete_job(JOB_LL* job_list_head, int index){
+void delete_job(int index){
     JOB_LL *p, *temp;
-    p = job_list_head;
+    p = jobs;
     int i=0;
     if (index == 0){
-        job_list_head = job_list_head-> next;
+        jobs = jobs-> next;
         free(p);
     }
     else{
@@ -64,11 +64,11 @@ void delete_job(JOB_LL* job_list_head, int index){
         }
     }
 }
-void delete_job_by_pid(JOB_LL* job_list_head, int pid){
+void delete_job_by_pid(int pid){
     JOB_LL *p, *temp;
-    p = job_list_head;
-    if (job_list_head->pid == pid){
-        job_list_head = job_list_head-> next;
+    p = jobs;
+    if (jobs->pid == pid && pid != 0){
+        jobs = jobs-> next;
         free(p);
     }
     else{
@@ -86,15 +86,16 @@ void delete_job_by_pid(JOB_LL* job_list_head, int pid){
         }
     }
 }
-void print_jobs(JOB_LL* job_list_head)
+void print_jobs(void)
 {
-    JOB_LL *p = job_list_head;
+    JOB_LL *p = jobs;
     int status;
     int index;
     while (p != NULL){
-        if (waitpid(p->pid, &status, WNOHANG) != 0)
+        if ((p->pid != 0 )&& (waitpid(p->pid, &status, WNOHANG) != 0))
         {
-            delete_job(job_list_head, index);
+            p = p -> next;
+            delete_job(index);
             // if the job is dead, delete the job from the list.
         }
         else
@@ -119,23 +120,23 @@ void print_jobs(JOB_LL* job_list_head)
     }
 }
 
-JOB_LL* pop_job(JOB_LL* job_list_head){
+JOB_LL* pop_job(void){
     JOB_LL *temp,*p;
-    p = job_list_head;
-    temp = job_list_head;
+    p = jobs;
+    temp = jobs;
     while(p != NULL){
         temp = p;
         p = p->next;
     }
     return temp;
 }
-JOB_LL* pop_job_by_id(JOB_LL* job_list_head, int id){
+JOB_LL* pop_job_by_id(int id){
     JOB_LL *temp,*p;
-    p = job_list_head;
-    temp = job_list_head;
+    p = jobs;
+    temp = jobs;
     int i=0;
     if (id==0){
-        return job_list_head;
+        return jobs;
     }
     else{
         while(i != id){
@@ -147,12 +148,12 @@ JOB_LL* pop_job_by_id(JOB_LL* job_list_head, int id){
     }
     return NULL;
 }
-JOB_LL* pop_job_by_pid(JOB_LL* job_list_head, int pid){
+JOB_LL* pop_job_by_pid(int pid){
     JOB_LL *temp,*p;
-    p = job_list_head;
-    temp = job_list_head;
-    if (job_list_head->pid== pid){
-        return job_list_head;
+    p = jobs;
+    temp = jobs;
+    if (jobs->pid== pid){
+        return jobs;
     }
     else{
         while(temp->pid != pid){
