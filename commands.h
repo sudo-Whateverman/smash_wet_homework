@@ -10,7 +10,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include "history.h"
-#include "jobs_list.h"
+#include "jobs_linked_list.h"
 #include "signals.h"
 #define MAX_LINE_SIZE 80
 #define MAX_ARG 20
@@ -19,7 +19,7 @@ int ExeComp(char* lineSize);
 int BgCmd(char* lineSize);
 int ExeCmd(char* lineSize, char* cmdString);
 int ExeExternal(char *args[MAX_ARG], int num_args);
-extern JOB_LIST jobs;
+extern JOB_LL *jobs;
 extern char *sigtranslation_[];
 extern struct sigaction SIGTSTP_handler;
 extern struct sigaction SIGINT_handler;

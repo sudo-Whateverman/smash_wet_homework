@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include "jobs_list.h"
+#include "jobs_linked_list.h"
 extern int ctrl_z_count;
-extern JOB_LIST jobs;
+extern JOB_LL *jobs;
 extern char *sigtranslation_[];
 void catch_suspend(int sig_num);
 void catch_int(int sig_num);

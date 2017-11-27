@@ -11,7 +11,7 @@
 #include "commands.h"
 #include "signals.h"
 #include "history.h"
-#include "jobs_list.h"
+#include "jobs_linked_list.h"
 #define MAX_LINE_SIZE 80
 #define MAXARGS 20
 
@@ -20,7 +20,7 @@
 char* L_Fg_Cmd;
 char lineSize[MAX_LINE_SIZE]; 
 HISTORY history; //Initialize the history to avoid unwanted behavior
-JOB_LIST jobs; //This represents the list of jobs. 
+JOB_LL* jobs; //This represents the list of jobs. 
 // A global signum to signame translation. 
 char *sigtranslation_[]={"INVALID", "SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP",
 "SIGABRT", "SIGBUS", "SIGFPE", "SIGKILL", "SIGUSR1", "SIGSEGV", "SIGUSR2",

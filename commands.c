@@ -179,13 +179,19 @@ int ExeCmd(char* lineSize, char* cmdString)
         signal(SIGTSTP, kill_and_run);
         if (num_arg==0)
         {
-            JOB job = jobs.jobs[jobs.front-1];
-            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job.pid);
+            JOB_LL* job = pop_job(jobs);
+            if (job == NULL)
+            {
+                printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ cannot be sent");
+                return 0;             
+            }
+            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job->pid);
             // using kill to send signals.
-            kill( job.pid, SIGCONT);
+            kill( job->pid, SIGCONT);
+            job->status = 0;
             // check to see if process has returned.
-            while ( endID!= job.pid){
-                endID = waitpid( job.pid, &status, WNOHANG);
+            while ( endID!= job->pid){
+                endID = waitpid( job->pid, &status, WNOHANG);
                 if (endID == -1) 
                 {/* error calling waitpid       */
                     perror("waitpid error");
@@ -201,11 +207,17 @@ int ExeCmd(char* lineSize, char* cmdString)
         else if (num_arg==1)
         {
             int index = atoi(args[1]);
-            JOB job = jobs.jobs[index];
-            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job.pid);
-            kill( job.pid, SIGCONT);
-            while ( endID!= job.pid){
-                endID = waitpid( job.pid, &status, WNOHANG);
+            JOB_LL* job = pop_job_by_id(jobs, index);
+            if (job == NULL)
+            {
+                printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ cannot be sent");
+                return 0;             
+            }
+            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job->pid);
+            kill( job->pid, SIGCONT);
+            job->status = 0;
+            while ( endID!= job->pid){
+                endID = waitpid( job->pid, &status, WNOHANG);
                 if (endID == -1) 
                 {/* error calling waitpid       */
                     perror("waitpid error");
@@ -226,17 +238,27 @@ int ExeCmd(char* lineSize, char* cmdString)
         // Same as fg, but don't wait on the process.
         if (num_arg==0)
         {
-            JOB job = jobs.jobs[jobs.front];
-            kill( job.pid, SIGCONT);            
-            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job.pid);
+            JOB_LL* job = pop_job(jobs);
+            if (job == NULL)
+            {
+                printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ cannot be sent");
+                return 0;             
+            }
+            kill( job->pid, SIGCONT);            
+            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job->pid);
             return 0;
         }
         else if (num_arg==1)
         {
             int index = atoi(args[1]);
-            JOB job = jobs.jobs[index];
-            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job.pid);            
-            kill( job.pid, SIGCONT);
+            JOB_LL* job = pop_job_by_id(jobs, index);
+            if (job == NULL)
+            {
+                printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ cannot be sent");
+                return 0;             
+            }
+            printf("‫‪signal‬‬ ‫‪SIGCONT‬‬ ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d", job->pid);            
+            kill( job->pid, SIGCONT);
             return 0;
         }
         else
@@ -263,7 +285,7 @@ int ExeCmd(char* lineSize, char* cmdString)
         if (num_arg==0)
         {
             // see documentation at helper function job_list.c
-            print_jobs(&jobs);
+            print_jobs(jobs);
         }
         else
         {
@@ -281,24 +303,31 @@ int ExeCmd(char* lineSize, char* cmdString)
         }
         else if (num_arg==1 && !strcmp(args[1], "kill"))
         {
-            JOB job;
+            JOB_LL* job = jobs;
             int status;
-            for (int i=0; i<jobs.front; i++){
-                if (job.status != 2){
-                    job = jobs.jobs[i];
-                    printf("[%d] %s - Sending SIGTERM...", i, job.cmdLine);
-                    kill(job.pid, SIGTERM);
+            if(job == NULL)
+            {
+                exit(0);
+            }
+            else
+            {
+                do{                                        
+                    printf("[%d] %s - Sending SIGTERM...", i, job->cmdLine);
+                    kill(job->pid, SIGTERM);
                     fflush(stdout);
                     sleep(5);
-                    int endID = waitpid( job.pid, &status, WNOHANG);
-                    if (endID != job.pid)
+                    int endID = waitpid( job->pid, &status, WNOHANG);
+                    if (endID != job->pid)
                     {
                         printf("(5 sec passed) Sending SIGKILL...");
                         fflush(stdout);
-                        kill(job.pid, SIGKILL);
+                        kill(job->pid, SIGKILL);
                     }
                     printf("Done.\n");
+                    job = job->next;
+                    
                 }
+                while (job->next != NULL);
             }
             fflush(stdout);
             exit(0);
@@ -313,7 +342,7 @@ int ExeCmd(char* lineSize, char* cmdString)
     {
         if (num_arg==2)
         {
-            JOB job;
+            JOB_LL* job;
             char signal_name[MAX_LINE_SIZE];
             int index, signal_;
             index = atoi(args[2]);
@@ -321,12 +350,12 @@ int ExeCmd(char* lineSize, char* cmdString)
             // basicaly it truncates the string exluding the '-' sign and then
             // passes the string to parse.
             signal_ = atoi(signal_name);
-            job = jobs.jobs[index];
-            if (job.pid == 0){
+            job = pop_job_by_id(jobs, index);
+            if (job->pid == 0){
                 printf("‫‪smash‬‬ ‫‪error:‬‬ ‫>‬ ‫‪kill‬‬ ‫‪job‬‬ %d ‫‪job‬‬ ‫‪does‬‬ ‫‪not‬‬ ‫‪exist‬‬\n", index);
                 return 1;
             }
-            else if (kill(job.pid, signal_))
+            else if (kill(job->pid, signal_))
             {
                 printf("‫‪smash‬‬ ‫‪error:‬‬ ‫>‬ ‫‪kill‬‬ ‫‪job‬‬ %d ‫‪cannot‬‬ ‫‪send‬‬ ‫‪signal‬‬\n", index);
                 return 1;
@@ -334,7 +363,7 @@ int ExeCmd(char* lineSize, char* cmdString)
             else
             {
                 printf("‫‪signal‬‬ %s ‫‪was‬‬ ‫‪sent‬‬ ‫‪to‬‬ ‫‪pid‬‬ %d\n",
-                        sigtranslation_[signal_], job.pid );               
+                        sigtranslation_[signal_], job->pid );               
                 return 0;
             }
         }
@@ -385,7 +414,7 @@ int ExeExternal(char *args[MAX_ARG], int num_args)
             break;
             
         default:
-            
+            insert_job(jobs, pID, time(NULL), args[0], 0);
             wait(&status);
             return status;
             
@@ -405,7 +434,6 @@ int ExeComp(char* lineSize)
 	char* args[5];
         int pID, w;
         int status;
-        JOB job;                
         args[0] = "/bin/sh";
         args[1] = "-f";
         args[2] = "-c";
@@ -433,16 +461,11 @@ int ExeComp(char* lineSize)
                 
             default:
                 // Insert the job to init the pid as global.
-                strcpy(job.cmdLine, lineSize);
-                job.pid = pID;
-                job.starting_time = time(NULL);
-                job.status = 0;
-                insert_job(&jobs, job);
+                insert_job(jobs, pID, time(NULL), lineSize, 0);
                 // set handler to pass kill
                 
-                //                waitpid(job.pid, &status, WUNTRACED);
                 do {
-                    w = waitpid(job.pid, &status, WUNTRACED);
+                    w = waitpid(pID, &status, WUNTRACED);
                     if (w == -1) 
                     {
                         perror("waitpid");
@@ -486,16 +509,16 @@ int ExeComp(char* lineSize)
 int BgCmd(char* lineSize)
 {
     
-    char* Command;
+    char *Command;
+    char cmdLine[MAX_LINE_SIZE];
     char* delimiters = " \t\n";
     char *args[MAX_ARG];
     if (lineSize[strlen(lineSize)-2] == '&')
     {
         lineSize[strlen(lineSize)-2] = '\0';
         int pID;
-        int i, num_arg;
-        JOB bg_job;
-        strncpy(bg_job.cmdLine, lineSize, MAX_LINE_SIZE);
+        int i, num_arg = 0; // This was getting a lot of SEGFAULTS easily.
+        strncpy(cmdLine, lineSize, MAX_LINE_SIZE);
         Command = strtok(lineSize, delimiters);
         if (Command == NULL)
             return 0; 
@@ -525,12 +548,7 @@ int BgCmd(char* lineSize)
                 break;
                 
             default:
-                kill(pID, SIGTSTP);  // TO DO : delete this from here.
-                bg_job.pid = pID;
-                bg_job.starting_time = time(NULL);
-                bg_job.status = 0;
-                printf("Started %s at pid %d\n", bg_job.cmdLine, bg_job.pid );
-                insert_job(&jobs, bg_job);
+                insert_job(jobs, pID, time(NULL), cmdLine, 0);
                 break;
                 
         }
